@@ -1,25 +1,32 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-import pikepdf
 import tempfile
-import os
-import uuid
+from pathlib import Path
 
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC = os.path.join(BASE, "static")
-TMP = os.path.join(BASE, "tmp")
-os.makedirs(TMP, exist_ok=True)
+import pikepdf
+from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+APP_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = APP_DIR.parent
+STATIC_DIR = PROJECT_ROOT / "static"
+TEMP_DIR = Path(tempfile.gettempdir())
+
+if not STATIC_DIR.is_dir():
+    raise RuntimeError(f"Required static directory not found: {STATIC_DIR}")
 
 app = FastAPI(title="PDF Password Remover")
 
-app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def home():
-    with open(os.path.join(STATIC, "index.html"), "r", encoding="utf-8") as f:
-        return f.read()
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+def _new_temp_pdf() -> Path:
+    with tempfile.NamedTemporaryFile(dir=TEMP_DIR, suffix=".pdf", delete=False) as temp_file:
+        return Path(temp_file.name)
 
 
 @app.post("/api/remove-password")
@@ -27,29 +34,40 @@ async def remove_password(
     file: UploadFile = File(...),
     password: str = Form(...)
 ):
-    if not file.filename.lower().endswith(".pdf"):
+    original_name = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1]
+    if not original_name.lower().endswith(".pdf"):
         return JSONResponse({"error": "Please upload a PDF file."}, status_code=400)
 
-    job_id = uuid.uuid4().hex
-    input_path = os.path.join(TMP, f"{job_id}_input.pdf")
-    output_path = os.path.join(TMP, f"{job_id}_unlocked.pdf")
+    input_path = None
+    output_path = None
 
     try:
-        with open(input_path, "wb") as out:
+        input_path = _new_temp_pdf()
+        output_path = _new_temp_pdf()
+        header = bytearray()
+        with input_path.open("wb") as out:
             while chunk := await file.read(1024 * 1024):
+                if len(header) < 1024:
+                    header.extend(chunk[:1024 - len(header)])
                 out.write(chunk)
+
+        if b"%PDF-" not in header:
+            return JSONResponse({"error": "Please upload a valid PDF file."}, status_code=400)
 
         with pikepdf.open(input_path, password=password) as pdf:
             pdf.save(output_path)
 
-        download_name = os.path.splitext(file.filename)[0] + "_unlocked.pdf"
-
-        return FileResponse(
+        download_name = Path(original_name).stem + "_unlocked.pdf"
+        background_tasks = BackgroundTasks()
+        background_tasks.add_task(output_path.unlink, missing_ok=True)
+        response = FileResponse(
             output_path,
             media_type="application/pdf",
             filename=download_name,
-            background=None
+            background=background_tasks,
         )
+        output_path = None
+        return response
 
     except pikepdf.PasswordError:
         return JSONResponse(
@@ -67,9 +85,8 @@ async def remove_password(
             status_code=500
         )
     finally:
-        # Input is always deleted. The output is returned by FileResponse.
-        # A production deployment should use a cleanup worker for output files.
-        try:
-            os.remove(input_path)
-        except OSError:
-            pass
+        await file.close()
+        if input_path is not None:
+            input_path.unlink(missing_ok=True)
+        if output_path is not None:
+            output_path.unlink(missing_ok=True)
