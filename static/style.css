@@ -1,0 +1,115 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, Arial, sans-serif;
+  background: #f4f6f8;
+  color: #111827;
+  display: grid;
+  place-items: center;
+}
+
+.container { width: min(92%, 620px); }
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 36px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.08);
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+h1 { margin: 14px 0 8px; font-size: 34px; }
+.subtitle { color: #6b7280; line-height: 1.6; margin-bottom: 26px; }
+
+.dropzone {
+  min-height: 180px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.dropzone:hover, .dropzone.dragging {
+  border-color: #4f46e5;
+  background: #f8f7ff;
+}
+
+.icon { font-size: 42px; margin-bottom: 8px; }
+.dropzone span { margin-top: 5px; color: #94a3b8; font-size: 14px; }
+
+.label {
+  display: block;
+  margin: 22px 0 8px;
+  font-weight: 700;
+}
+
+.password-wrap {
+  display: flex;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.password-wrap input {
+  flex: 1;
+  border: 0;
+  padding: 14px;
+  font-size: 15px;
+  outline: none;
+}
+
+.password-wrap button {
+  border: 0;
+  padding: 0 16px;
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+.primary {
+  width: 100%;
+  margin-top: 18px;
+  padding: 15px;
+  border: 0;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary:disabled { opacity: .6; cursor: wait; }
+
+.status { min-height: 24px; margin-top: 14px; text-align: center; font-size: 14px; }
+
+.privacy {
+  margin-top: 22px;
+  padding: 13px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .card { padding: 24px; }
+  h1 { font-size: 28px; }
+}

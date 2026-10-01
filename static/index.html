@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Password Remover</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="badge">PDF TOOL</div>
+      <h1>Remove PDF Password</h1>
+      <p class="subtitle">
+        Upload a password-protected PDF and enter its existing password.
+        The unlocked PDF will be generated for download.
+      </p>
+
+      <form id="form">
+        <label class="dropzone" id="dropzone">
+          <input id="file" type="file" accept=".pdf,application/pdf" hidden>
+          <div class="icon">📄</div>
+          <strong id="fileText">Choose a PDF</strong>
+          <span>or drag & drop it here</span>
+        </label>
+
+        <label class="label" for="password">PDF Password</label>
+        <div class="password-wrap">
+          <input id="password" type="password" placeholder="Enter the existing password" required>
+          <button type="button" id="toggle">Show</button>
+        </div>
+
+        <button class="primary" id="submit" type="submit">
+          Remove Password
+        </button>
+
+        <div id="status" class="status"></div>
+      </form>
+
+      <div class="privacy">
+        🔒 <b>Privacy:</b> Files are processed by the server running this application.
+        For public deployment, use HTTPS and configure automatic temporary-file cleanup.
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
